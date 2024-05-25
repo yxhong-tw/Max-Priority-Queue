@@ -34,7 +34,10 @@ module MPQ(
     parameter [3:0] BUILD_QUEUE = 4'd2;
     parameter [3:0] MH_COMPARE = 4'd3;
     parameter [3:0] MH_RECURSE = 4'd4;
-    parameter [3:0] WRITE = 4'd5;
+    parameter [3:0] EXTRACT_MAX = 4'd5;
+    parameter [3:0] INCREASE_VALUE = 4'd6;
+    parameter [3:0] INSERT_DATA = 4'd7;
+    parameter [3:0] WRITE = 4'd8;
 
     reg [3:0] state;
     reg [3:0] next_state;
@@ -57,6 +60,15 @@ module MPQ(
     reg MH_COMPARE_done;
     reg MH_RECURSE_done;
     reg MH_done;
+
+    // EXTRACT_MAX
+    reg EXTRACT_MAX_done;
+
+    // INCREASE_VALUE
+    reg INCREASE_VALUE_done;
+
+    // INSERT_DATA
+    reg INSERT_DATA_done;
 
     // WRITE
     reg initialized_loop_index;
@@ -96,6 +108,15 @@ module MPQ(
             MH_RECURSE_done <= 0;
             MH_done <= 0;
 
+            // EXTRACT_MAX
+            EXTRACT_MAX_done <= 0;
+
+            // INCREASE_VALUE
+            INCREASE_VALUE_done <= 0;
+
+            // INSERT_DATA
+            INSERT_DATA_done <= 0;
+
             // WRITE
             initialized_loop_index <= 0;
 
@@ -128,6 +149,15 @@ module MPQ(
                     MH_COMPARE_done <= 0;
                     MH_RECURSE_done <= 0;
                     MH_done <= 0;
+
+                    // EXTRACT_MAX
+                    EXTRACT_MAX_done <= 0;
+
+                    // INCREASE_VALUE
+                    INCREASE_VALUE_done <= 0;
+
+                    // INSERT_DATA
+                    INSERT_DATA_done <= 0;
                 end
                 READ: begin
                     busy <= 1;
@@ -190,6 +220,29 @@ module MPQ(
 
                     MH_RECURSE_done <= 1;
                 end
+                EXTRACT_MAX: begin
+                    busy <= 1;
+
+                    tree[0] = tree[tree_data_number - 1];
+                    tree_data_number = tree_data_number - 1;
+
+                    EXTRACT_MAX_done = 1;
+                end
+                INCREASE_VALUE: begin
+                    busy <= 1;
+
+                    tree[index] = value;
+
+                    INCREASE_VALUE_done = 1;
+                end
+                INSERT_DATA: begin
+                    busy <= 1;
+
+                    tree[tree_data_number] = value;
+                    tree_data_number = tree_data_number + 1;
+
+                    INSERT_DATA_done = 1;
+                end
                 WRITE: begin
                     busy <= 1;
 
@@ -218,8 +271,13 @@ module MPQ(
                 end else if (cmd_valid) begin
                     if (cmd == 3'b000) begin
                         next_state <= BUILD_QUEUE;
-                    end
-                    else if (cmd == 3'b100) begin
+                    end else if (cmd == 3'b001) begin
+                        next_state <= EXTRACT_MAX;
+                    end else if (cmd == 3'b010) begin
+                        next_state <= INCREASE_VALUE;
+                    end else if (cmd == 3'b011) begin
+                        next_state <= INSERT_DATA;
+                    end else if (cmd == 3'b100) begin
                         next_state <= WRITE;
                     end
                 end
@@ -250,6 +308,21 @@ module MPQ(
             MH_RECURSE: begin
                 if (MH_RECURSE_done) begin
                     next_state <= MH_COMPARE;
+                end
+            end
+            EXTRACT_MAX: begin
+                if (EXTRACT_MAX_done) begin
+                    next_state <= BUILD_QUEUE;
+                end
+            end
+            INCREASE_VALUE: begin
+                if (INCREASE_VALUE_done) begin
+                    next_state <= BUILD_QUEUE;
+                end
+            end
+            INSERT_DATA: begin
+                if (INSERT_DATA_done) begin
+                    next_state <= BUILD_QUEUE;
                 end
             end
             WRITE: begin
