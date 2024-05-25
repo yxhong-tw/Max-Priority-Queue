@@ -163,13 +163,13 @@ module MPQ(
                     r = 2 * (_i + 1);
                     largest = _i;
 
-                    if (l <= tree_data_number && tree[l] > tree[_i]) begin
+                    if (l < tree_data_number && tree[l] > tree[_i]) begin
                         largest = l;
                     end else begin
                         largest = _i;
                     end
 
-                    if (r <= tree_data_number && tree[r] > tree[largest]) begin
+                    if (r < tree_data_number && tree[r] > tree[largest]) begin
                         largest = r;
                     end
 
