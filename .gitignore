@@ -1,6 +1,9 @@
+images
+Quartus_Proj
 work
 
 *.bak
 *.mpf
 *.mti
+*.sdo_typ.csd
 *.wlf
