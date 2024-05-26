@@ -51,11 +51,11 @@ module MPQ(
     reg BQ_done;
 
     // MAX_HEAPIFY
-    reg [7:0] i;
-    reg [7:0] _i;
-    reg [7:0] l;
-    reg [7:0] r;
-    reg [7:0] largest;
+    reg [4:0] i;
+    reg [4:0] _i;
+    reg [4:0] l;
+    reg [4:0] r;
+    reg [4:0] largest;
     reg [7:0] temp_data;
     reg MH_COMPARE_done;
     reg MH_RECURSE_done;
@@ -71,10 +71,11 @@ module MPQ(
     reg INSERT_DATA_done;
 
     // WRITE
-    reg initialized_loop_index;
+    reg initialized_tree_counter;
 
-    reg [7:0] tree_data_number;
-    reg [7:0] tree [0:255];
+    reg [4:0] tree_counter;
+    reg [4:0] tree_data_number;
+    reg [7:0] tree [0:31];
 
     integer loop_idx;
 
@@ -87,7 +88,6 @@ module MPQ(
             done <= 0;
 
             state <= IDLE;
-            next_state <= IDLE;
 
             // READ
             R_done <= 0;
@@ -118,10 +118,11 @@ module MPQ(
             INSERT_DATA_done <= 0;
 
             // WRITE
-            initialized_loop_index <= 0;
+            initialized_tree_counter <= 0;
 
+            tree_counter <= 0;
             tree_data_number <= 0;
-            for (loop_idx = 0; loop_idx < 256; loop_idx = loop_idx + 1) begin
+            for (loop_idx = 0; loop_idx < 32; loop_idx = loop_idx + 1) begin
                 tree[loop_idx] <= 0;
             end
         end else begin
@@ -158,6 +159,8 @@ module MPQ(
 
                     // INSERT_DATA
                     INSERT_DATA_done <= 0;
+
+                    loop_idx <= 0;
                 end
                 READ: begin
                     busy <= 1;
@@ -246,15 +249,15 @@ module MPQ(
                 WRITE: begin
                     busy <= 1;
 
-                    if (initialized_loop_index == 0) begin
-                        loop_idx = 0;
-                        initialized_loop_index <= 1;
-                    end else if (loop_idx < tree_data_number) begin
+                    if (initialized_tree_counter == 0) begin
+                        tree_counter <= 0;
+                        initialized_tree_counter <= 1;
+                    end else if (tree_counter < tree_data_number) begin
                         RAM_valid <= 1;
-                        RAM_A <= loop_idx;
-                        RAM_D <= tree[loop_idx];
+                        RAM_A <= tree_counter;
+                        RAM_D <= tree[tree_counter];
 
-                        loop_idx = loop_idx + 1;
+                        tree_counter = tree_counter + 5'b00001;
                     end else begin
                         done <= 1;
                     end
@@ -264,6 +267,8 @@ module MPQ(
     end
 
     always @(*) begin
+        next_state = state;
+
         case (state)
             IDLE: begin
                 if (data_valid) begin
